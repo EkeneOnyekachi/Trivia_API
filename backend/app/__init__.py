@@ -2,6 +2,7 @@ from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 import random
 
+
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
@@ -27,29 +28,36 @@ def create_app(test_config=None):
 
     @app.after_request
     def after_request(response):
-        response.headers.add(
-            "Access-Control-Allow-Headers", "Content-Type,Authorization,true"
-        )
-        response.headers.add(
-            "Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS"
-        )
-        return response
+
+        try:
+            response.headers.add(
+                "Access-Control-Allow-Headers", "Content-Type,Authorization,true"
+            )
+            response.headers.add(
+                "Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS"
+            )
+            return response
+        except Exception as erro:
+            print(erro)
 
     @app.route("/categories")
     def obtain_categories():
 
-        # create dictionary object
-        categorization = {}
+        try:
+            # create dictionary object
+            categorization = {}
 
-        categories = Category.query.order_by(Category.id).all()
-        for category in categories:
-            # add item to dictionary cat
-            categorization[category.id] = category.type
+            categories = Category.query.order_by(Category.id).all()
+            for category in categories:
+                # add item to dictionary cat
+                categorization[category.id] = category.type
 
-        if len(categories) == 0:
-            abort(404)
+            if len(categories) == 0:
+                abort(404)
 
-        return jsonify({"success": True, "categories": categorization})
+            return jsonify({"success": True, "categories": categorization})
+        except Exception as error:
+            print(error)
 
     @app.route("/questions")
     def obtain_questions():
@@ -89,7 +97,8 @@ def create_app(test_config=None):
             question.delete()
 
             return jsonify({"success": True, "deleted": question.id})
-        except:
+        except Exception as error:
+            print(error)
             abort(422)
 
     @app.route("/questions", methods=["POST"])
@@ -120,9 +129,11 @@ def create_app(test_config=None):
                         "created": question.id,
                     }
                 )
-            except:
+            except Exception as erro:
+                print(erro)
                 abort(422)
-        except:
+        except Exception as erro:
+            print(erro)
             abort(400)
 
     @app.route("/questions/search_question", methods=["POST"])
@@ -152,6 +163,7 @@ def create_app(test_config=None):
 
     @app.route("/categories/<int:category_id>/questions")
     def obtain_questions_by_category(category_id):
+
         try:
             # Get category id
             categorization = Category.query.filter(
@@ -174,7 +186,8 @@ def create_app(test_config=None):
                     "current_category": categorization.type,
                 }
             )
-        except:
+        except Exception as erro:
+            print(erro)
             abort(404)
 
     @app.route("/quizzes", methods=["POST"])
@@ -190,13 +203,15 @@ def create_app(test_config=None):
             abort(422)
 
         """Get question  category. used notin_ operator to get only 
-        questions that does not belong to (previous_questions)"""
-
-        possible_questions = (
-            Question.query.filter_by(category=category["id"])
-            .filter(Question.id.notin_((previous_quiz_questions)))
-            .all()
-        )
+            questions that does not belong to (previous_questions)"""
+        if category["id"] == 0:
+            possible_questions = Question.query.all()
+        else:
+            possible_questions = (
+                Question.query.filter_by(category=category["id"])
+                .filter(Question.id.notin_((previous_quiz_questions)))
+                .all()
+            )
 
         question = possible_questions[random.randrange(0, len(possible_questions), 1)]
 
