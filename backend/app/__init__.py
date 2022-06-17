@@ -202,23 +202,28 @@ def create_app(test_config=None):
         if category is None or previous_quiz_questions is None:
             abort(422)
 
-        """Get question  category. used notin_ operator to get only 
-            questions that does not belong to (previous_questions)"""
         if category["id"] == 0:
-            possible_questions = Question.query.all()
+            questions = Question.query.all()
         else:
-            possible_questions = (
-                Question.query.filter_by(category=category["id"])
-                .filter(Question.id.notin_((previous_quiz_questions)))
-                .all()
-            )
+            questions = Question.query.filter_by(category=category["id"]).all()
 
-        question = possible_questions[random.randrange(0, len(possible_questions), 1)]
+        sum = len(questions)
 
-        if len(possible_questions) > 0:
+        def confirm_if_previous_question(qusetion):
+            used = False
+            for quiz in previous_quiz_questions:
+                if quiz == question.id:
+                    used = True
+            return used
+
+        question = questions[random.randrange(0, len(questions))]
+
+        while confirm_if_previous_question(question):
+
+            if len(previous_quiz_questions) == sum:
+                return jsonify({"success": True})
+        else:
             return jsonify({"success": True, "question": question.format()})
-        else:
-            return None
 
     # Error handling
 
