@@ -58,6 +58,8 @@ def create_app(test_config=None):
             return jsonify({"success": True, "categories": categorization})
         except Exception as error:
             print(error)
+            
+#get all questions
 
     @app.route("/questions")
     def obtain_questions():
